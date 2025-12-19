@@ -1,14 +1,31 @@
-FROM python:3.10.4-slim-buster
-RUN apt update && apt upgrade -y
-RUN apt-get install git curl python3-pip ffmpeg -y
-RUN apt-get -y install git
-RUN apt-get install -y wget python3-pip curl bash neofetch ffmpeg software-properties-common
-COPY requirements.txt .
+FROM python:3.10-slim-bullseye
 
-RUN pip3 install wheel
-RUN pip3 install --no-cache-dir -U -r requirements.txt
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
-COPY . .
-EXPOSE 8000
 
-CMD flask run -h 0.0.0.0 -p 8000 & python3 -m devgagan
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    ffmpeg \
+    python3-pip \
+    gcc \
+    libffi-dev \
+    musl-dev \
+    make \
+    g++ \
+    cmake \
+    aria2 \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy source
+COPY . .
+
+# Install Python deps
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Start app
+CMD ["python3", "main.py"]
