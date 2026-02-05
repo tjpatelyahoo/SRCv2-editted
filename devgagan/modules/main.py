@@ -25,7 +25,6 @@ from devgagan.core.func import *
 from devgagan.core.mongo import db
 from pyrogram.errors import FloodWait
 from datetime import datetime, timedelta
-from devgagan.modules import caption_edit
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import subprocess
 from devgagan.modules.shrink import is_user_verified
