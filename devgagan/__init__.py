@@ -28,7 +28,7 @@ app = Client(
     parse_mode=ParseMode.MARKDOWN
 )
 
-# ---------------- TELETHON CLIENTS (NO START HERE) ---------------- #
+# ---------------- TELETHON CLIENTS ---------------- #
 
 sex = TelegramClient('sexrepo', API_ID, API_HASH)
 telethon_client = TelegramClient('telethon_session', API_ID, API_HASH)
@@ -40,11 +40,11 @@ if STRING:
 else:
     pro = None
 
-# userrbot should NEVER be None
+# userrbot exists but does NOT auto-start
 if DEFAULT_SESSION:
-    userrbot = Client("userrbot", api_id=API_ID, api_hash=API_HASH, session_string=DEFAULT_SESSION)
+    userrbot = Client("userrbot", API_ID, API_HASH, session_string=DEFAULT_SESSION)
 else:
-    userrbot = Client("userrbot", api_id=API_ID, api_hash=API_HASH)
+    userrbot = Client("userrbot", API_ID, API_HASH)
 
 # ---------------- MONGODB ---------------- #
 
@@ -66,19 +66,19 @@ async def restrict_bot():
 
     await setup_database()
 
-    # start Pyrogram bot
+    # start main bot
     await app.start()
 
-    # start Telethon safely
+    # start telethon
     await sex.start(bot_token=BOT_TOKEN)
     await telethon_client.start(bot_token=BOT_TOKEN)
 
-    # optional clients
+    # optional client
     if pro:
         await pro.start()
 
-    if userrbot:
-        await userrbot.start()
+    # DO NOT start userrbot here
+    # it will start later via /login
 
     getme = await app.get_me()
     BOT_ID = getme.id
