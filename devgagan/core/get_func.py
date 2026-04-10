@@ -239,15 +239,17 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             
         # Fetch the target message
         msg = await userbot.get_messages(chat, msg_id)
-        if msg.service or msg.empty:
+
+        if not msg or msg.service or msg.empty:
             await app.delete_messages(sender, edit_id)
             return
-        # 🔥 TOPIC FILTER
+
+        # 🔥 TOPIC FILTER (PYROGRAM FIX)
         if thread_id:
-            if not msg or not msg.reply_to:
+            if not msg.reply_to_message_id:
                 return
 
-            if msg.reply_to.reply_to_msg_id != thread_id:
+            if msg.reply_to_message_id != thread_id:
                 return
                 
         target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
