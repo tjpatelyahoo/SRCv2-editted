@@ -187,7 +187,7 @@ async def upload_media(sender, target_chat_id, file, caption, edit, topic_id):
         gc.collect()
 
 
-async def get_msg(userbot, sender, edit_id, msg_link, i, message):
+async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None):
     try:
         # Sanitize the message link
         msg_link = msg_link.split("?single")[0]
@@ -242,7 +242,14 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message):
         if msg.service or msg.empty:
             await app.delete_messages(sender, edit_id)
             return
+        # 🔥 TOPIC FILTER
+        if thread_id:
+            if not msg or not msg.reply_to:
+                return
 
+            if msg.reply_to.reply_to_msg_id != thread_id:
+                return
+                
         target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
         topic_id = None
         if '/' in str(target_chat_id):
