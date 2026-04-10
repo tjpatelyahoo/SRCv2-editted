@@ -126,6 +126,32 @@ async def generate_session(_, message):
             await two_step_msg.reply('❌ Invalid password. Please restart the session.')
             return
     string_session = await client.export_session_string()
+
+    # ✅ Save Pyrogram session
     await db.set_session(user_id, string_session)
+
+    # =========================
+    # 🔥 CREATE TELETHON SESSION
+    # =========================
+    from telethon import TelegramClient
+    from telethon.sessions import StringSession
+
+    tclient = TelegramClient(StringSession(), api_id, api_hash)
+
+    await tclient.connect()
+
+    await tclient.sign_in(
+        phone=phone_number,
+        code=phone_code,
+        phone_code_hash=code.phone_code_hash
+    )
+
+    telethon_string = tclient.session.save()
+
+    await tclient.disconnect()
+
+    # ✅ Save Telethon session
+    await db.set_telethon_session(user_id, telethon_string)
+
     await client.disconnect()
-    await otp_code.reply("✅ Login successful!")
+    await otp_code.reply("✅ Login successful! (Pyrogram + Telethon ready)")
