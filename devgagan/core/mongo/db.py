@@ -85,4 +85,26 @@ async def remove_channel(user_id):
 async def delete_session(user_id):
     """Delete the session associated with the given user_id from the database."""
     await db.update_one({"_id": user_id}, {"$unset": {"session": ""}})
+    # =========================
+# 🔥 TELETHON SESSION SUPPORT
+# =========================
+
+async def set_telethon_session(user_id, session):
+    data = await get_data(user_id)
+    if data and data.get("_id"):
+        await db.update_one(
+            {"_id": user_id},
+            {"$set": {"telethon_session": session}}
+        )
+    else:
+        await db.insert_one(
+            {"_id": user_id, "telethon_session": session}
+        )
+
+
+async def get_telethon_session(user_id):
+    data = await get_data(user_id)
+    if data:
+        return data.get("telethon_session")
+    return None
  
