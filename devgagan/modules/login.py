@@ -127,24 +127,18 @@ async def generate_session(_, message):
             return
     string_session = await client.export_session_string()
 
-    # ✅ Save Pyrogram session
+# ✅ Save Pyrogram session
     await db.set_session(user_id, string_session)
 
     # =========================
     # 🔥 CREATE TELETHON SESSION
     # =========================
-    from telethon import TelegramClient
     from telethon.sessions import StringSession
+    from telethon import TelegramClient
 
-    tclient = TelegramClient(StringSession(), api_id, api_hash)
+    tclient = TelegramClient(StringSession(string_session), api_id, api_hash)
 
     await tclient.connect()
-
-    await tclient.sign_in(
-        phone=phone_number,
-        code=phone_code,
-        phone_code_hash=code.phone_code_hash
-    )
 
     telethon_string = tclient.session.save()
 
