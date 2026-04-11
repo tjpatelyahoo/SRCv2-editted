@@ -336,7 +336,11 @@ async def topic_link(_, message):
         otp = await app.ask(user_id, "🔐 Enter OTP (format: 1 2 3 4 5)")
         phone_code = otp.text.replace(" ", "")
 
-        await tclient.sign_in(phone.text, phone_code, code.phone_code_hash)
+        await tclient.sign_in(
+            phone=phone.text,
+            code=phone_code,
+            phone_code_hash=code.phone_code_hash
+        )
 
         # 🔑 2FA
         try:
