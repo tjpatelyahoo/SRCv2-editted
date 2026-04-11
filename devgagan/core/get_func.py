@@ -263,13 +263,6 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
 
                 if msg.reply_to_message_id != thread_id:
                     return
-            else:
-                # Pyrogram message
-                if not msg.reply_to_message_id:
-                    return
-
-                if msg.reply_to_message_id != thread_id:
-                    return
                     
         target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
         topic_id = None
