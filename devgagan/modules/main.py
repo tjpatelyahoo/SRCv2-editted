@@ -407,7 +407,6 @@ async def topic_link(_, message):
             if not users_loop.get(user_id):
                 break
 
-            # 🔥 TELETHON FILTER ONLY
             tmsg = await tclient.get_messages(chat, ids=i)
 
             if not tmsg:
@@ -419,44 +418,27 @@ async def topic_link(_, message):
             if tmsg.reply_to.reply_to_msg_id != thread_id:
                 continue
 
-            # ✅ VALID MESSAGE → PROCESS WITH PYROGRAM
+            # ✅ KEEP THIS (WORKING LOGIC)
+            processed += 1
 
             url = f"{'/'.join(start_link.split('/')[:-1])}/{i}"
 
             temp = await app.send_message(message.chat.id, "Processing...")
 
             try:
-                await get_msg(
-                    userbot,
-                    user_id,
-                    temp.id,
-                    url,
-                    0,
-                    message
-                )
-
-                processed += 1   # ✅ ONLY after success
+                await get_msg(userbot, user_id, temp.id, url, 0, message)
 
             except FloodWait as fw:
-                wait_time = int(fw.value) if hasattr(fw, "value") else int(fw.x)
+                wait_time = int(getattr(fw, "value", getattr(fw, "x", 5)))
                 await asyncio.sleep(wait_time)
 
-                await get_msg(
-                    userbot,
-                    user_id,
-                    temp.id,
-                    url,
-                    0,
-                    message
-                )
-
-                processed += 1   # ✅ also after retry success
+                try:
+                    await get_msg(userbot, user_id, temp.id, url, 0, message)
+                except Exception as e:
+                    await app.send_message(user_id, f"⚠️ Retry failed on {i}:\n{e}")
 
             except Exception as e:
-                await app.send_message(
-                    user_id,
-                    f"⚠️ Error on message {i}:\n{str(e)}"
-                )
+                await app.send_message(user_id, f"⚠️ Error on message {i}:\n{e}")
 
             await msg.edit_text(
                 f"🚀 Topic process started\nProcessing: {processed}/{total}"
@@ -464,7 +446,6 @@ async def topic_link(_, message):
 
             await asyncio.sleep(0.5)
 
-        
 
     except Exception as e:
         await app.send_message(message.chat.id, f"Error: {e}")
