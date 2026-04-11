@@ -336,19 +336,18 @@ async def topic_link(_, message):
         otp = await app.ask(user_id, "🔐 Enter OTP (format: 1 2 3 4 5)")
         phone_code = otp.text.replace(" ", "")
 
-        await tclient.sign_in(
-            phone=phone.text,
-            code=phone_code,
-            phone_code_hash=code.phone_code_hash
-        )
-
-        # 🔑 2FA
         try:
-            pwd = await app.ask(user_id, "🔑 Enter 2FA password (or send /skip)")
-            if pwd.text != "/skip":
+            await tclient.sign_in(
+                phone=phone.text,
+                code=phone_code,
+                phone_code_hash=code.phone_code_hash
+            )
+        except Exception as e:
+            if "password is required" in str(e).lower():
+                pwd = await app.ask(user_id, "🔑 Enter your 2FA password")
                 await tclient.sign_in(password=pwd.text)
-        except:
-            pass
+            else:
+                raise e
 
         telethon_string = tclient.session.save()
         await tclient.disconnect()
