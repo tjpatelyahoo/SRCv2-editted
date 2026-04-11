@@ -441,7 +441,6 @@ async def topic_link(_, message):
                 wait_time = int(fw.value) if hasattr(fw, "value") else int(fw.x)
                 await asyncio.sleep(wait_time)
 
-                # retry once
                 await get_msg(
                     userbot,
                     user_id,
@@ -457,10 +456,10 @@ async def topic_link(_, message):
                     f"⚠️ Error on message {i}:\n{str(e)}"
                 )
 
-            if processed % 3 == 0:
-                await msg.edit_text(
-                    f"🚀 Topic process started\nProcessing: {processed}/{total}"
-                )
+            # ✅ ALWAYS update (NO % 3)
+            await msg.edit_text(
+                f"🚀 Topic process started\nProcessing: {processed}/{total}"
+            )
 
             await asyncio.sleep(0.5)
 
