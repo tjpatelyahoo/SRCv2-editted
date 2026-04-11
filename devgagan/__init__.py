@@ -70,8 +70,8 @@ async def restrict_bot():
     await app.start()
 
     # start telethon
-    await sex.start(bot_token=BOT_TOKEN)
-    await telethon_client.start(bot_token=BOT_TOKEN)
+    #await sex.start(bot_token=BOT_TOKEN)
+    #await telethon_client.start(bot_token=BOT_TOKEN)
 
     # optional client
     if pro:
