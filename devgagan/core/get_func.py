@@ -187,7 +187,7 @@ async def upload_media(sender, target_chat_id, file, caption, edit, topic_id):
         gc.collect()
 
 
-async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None):
+async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None, tclient=None):
     try:
         # Sanitize the message link
         msg_link = msg_link.split("?single")[0]
@@ -238,20 +238,39 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             return
             
         # Fetch the target message
-        msg = await userbot.get_messages(chat, msg_id)
+        if tclient:
+            msg = await tclient.get_messages(chat, ids=msg_id)
+        else:
+            msg = await userbot.get_messages(chat, msg_id)
 
         if not msg or msg.service or msg.empty:
             await app.delete_messages(sender, edit_id)
             return
 
-        # 🔥 TOPIC FILTER (PYROGRAM FIX)
+# 🔥 TOPIC FILTER (FINAL SAFE VERSION)
         if thread_id:
-            if not msg.reply_to_message_id:
-                return
+            if tclient:
+                # Telethon message
+                if not msg.reply_to or not getattr(msg.reply_to, "reply_to_msg_id", None):
+                    return
 
-            if msg.reply_to_message_id != thread_id:
-                return
-                
+                if msg.reply_to.reply_to_msg_id != thread_id:
+                    return
+            else:
+                # Pyrogram message
+                if not msg.reply_to_message_id:
+                    return
+
+                if msg.reply_to_message_id != thread_id:
+                    return
+            else:
+                # Pyrogram message
+                if not msg.reply_to_message_id:
+                    return
+
+                if msg.reply_to_message_id != thread_id:
+                    return
+                    
         target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
         topic_id = None
         if '/' in str(target_chat_id):
