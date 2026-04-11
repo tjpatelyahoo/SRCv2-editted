@@ -418,7 +418,6 @@ async def topic_link(_, message):
             if tmsg.reply_to.reply_to_msg_id != thread_id:
                 continue
 
-            # ✅ KEEP THIS (WORKING LOGIC)
             processed += 1
 
             url = f"{'/'.join(start_link.split('/')[:-1])}/{i}"
@@ -426,25 +425,40 @@ async def topic_link(_, message):
             temp = await app.send_message(message.chat.id, "Processing...")
 
             try:
-                await get_msg(userbot, user_id, temp.id, url, 0, message)
+                await get_msg(
+                    userbot,
+                    user_id,
+                    temp.id,
+                    url,
+                    0,
+                    message
+                )
 
             except FloodWait as fw:
-                wait_time = int(getattr(fw, "value", getattr(fw, "x", 5)))
+                wait_time = int(fw.value) if hasattr(fw, "value") else int(fw.x)
                 await asyncio.sleep(wait_time)
 
-                try:
-                    await get_msg(userbot, user_id, temp.id, url, 0, message)
-                except Exception as e:
-                    await app.send_message(user_id, f"⚠️ Retry failed on {i}:\n{e}")
+                # retry once
+                await get_msg(
+                    userbot,
+                    user_id,
+                    temp.id,
+                    url,
+                    0,
+                    message
+                )
 
             except Exception as e:
-                await app.send_message(user_id, f"⚠️ Error on message {i}:\n{e}")
+                await app.send_message(
+                    user_id,
+                    f"⚠️ Error on message {i}:\n{str(e)}"
+                )
 
             await msg.edit_text(
                 f"🚀 Topic process started\nProcessing: {processed}/{total}"
             )
 
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.2)
 
 
     except Exception as e:
