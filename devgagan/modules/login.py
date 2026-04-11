@@ -130,33 +130,5 @@ async def generate_session(_, message):
 # ✅ Save Pyrogram session
     await db.set_session(user_id, string_session)
 
-    # =========================
-    # 🔥 CREATE TELETHON SESSION
-    # =========================
-    from telethon.sessions import StringSession
-    from telethon import TelegramClient
-
-    tclient = TelegramClient(StringSession(), api_id, api_hash)
-
-    await tclient.connect()
-
-    await tclient.sign_in(
-        phone=phone_number,
-        code=phone_code,
-        phone_code_hash=code.phone_code_hash
-    )
-
-    try:
-        await tclient.sign_in(password=password)
-    except:
-        pass
-
-    telethon_string = tclient.session.save()
-
-    await tclient.disconnect()
-
-    # ✅ Save Telethon session
-    await db.set_telethon_session(user_id, telethon_string)
-
     await client.disconnect()
-    await otp_code.reply("✅ Login successful! (Pyrogram + Telethon ready)")
+    await otp_code.reply("✅ Login successful!")
