@@ -243,7 +243,19 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
         else:
             msg = await userbot.get_messages(chat, msg_id)
 
-        if not msg or msg.service or msg.empty:
+        if not msg:
+            await app.delete_messages(sender, edit_id)
+            return
+
+        # 🔥 TELETHON vs PYROGRAM SAFE CHECK
+        if tclient:
+            # Telethon message
+            if msg.message is None and not msg.media:
+                return
+        else:
+            # Pyrogram message
+            if msg.service or msg.empty:
+                return
             await app.delete_messages(sender, edit_id)
             return
 
@@ -274,7 +286,7 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             await clone_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
             return
 
-        if msg.text:
+        if text_content:
             await clone_text_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
             return
 
@@ -478,7 +490,7 @@ async def copy_message_with_chat_id(app, userbot, sender, chat_id, message_id, e
             if not msg or msg.service or msg.empty:
                 return
 
-            if msg.text:
+            if text_content:
                 await app.send_message(target_chat_id, msg.text.markdown, reply_to_message_id=topic_id)
                 return
 
