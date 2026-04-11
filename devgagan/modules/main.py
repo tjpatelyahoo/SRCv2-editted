@@ -427,28 +427,59 @@ async def topic_link(_, message):
 
             temp = await app.send_message(message.chat.id, "Processing...")
 
-            await get_msg(
-                userbot,
-                user_id,
-                temp.id,
-                url,
-                0,
-                message
-            )
-            await msg.edit_text(
-                f"🚀 Topic process started\nProcessing: {processed}/{total}"
-            )
+            try:
+                await get_msg(
+                    userbot,
+                    user_id,
+                    temp.id,
+                    url,
+                    0,
+                    message
+                )
 
-        if processed == 0:
-            await msg.edit_text("❌ No messages found in this topic range.")
-        else:
-            await msg.edit_text("✅ Topic completed successfully!")
+            except FloodWait as fw:
+                wait_time = int(fw.value) if hasattr(fw, "value") else int(fw.x)
+                await asyncio.sleep(wait_time)
+
+                # retry once
+                await get_msg(
+                    userbot,
+                    user_id,
+                    temp.id,
+                    url,
+                    0,
+                    message
+                )
+
+            except Exception as e:
+                await app.send_message(
+                    user_id,
+                    f"⚠️ Error on message {i}:\n{str(e)}"
+                )
+
+            if processed % 3 == 0:
+                await msg.edit_text(
+                    f"🚀 Topic process started\nProcessing: {processed}/{total}"
+                )
+
+            await asyncio.sleep(0.5)
+
+        
 
     except Exception as e:
         await app.send_message(message.chat.id, f"Error: {e}")
 
     finally:
         users_loop.pop(user_id, None)
+
+        try:
+            if processed == 0:
+                await msg.edit_text("❌ No messages found in this topic range.")
+            else:
+                await msg.edit_text("🎉 Batch completed successfully!")
+        except Exception as e:
+            print(f"Final edit failed: {e}")
+
         await tclient.disconnect()
         
 @app.on_message(filters.command("cancel"))
