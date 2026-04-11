@@ -187,7 +187,7 @@ async def upload_media(sender, target_chat_id, file, caption, edit, topic_id):
         gc.collect()
 
 
-async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None, tclient=None):
+async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None):
     try:
         # Sanitize the message link
         msg_link = msg_link.split("?single")[0]
@@ -238,52 +238,13 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             return
             
         # Fetch the target message
-        if tclient:
-            msg = await tclient.get_messages(chat, ids=msg_id)
-        else:
-            msg = await userbot.get_messages(chat, msg_id)
-
-        if not msg:
+        msg = await userbot.get_messages(chat, msg_id)
+        # 🔥 IGNORE thread_id (handled in /topic)
+        pass
+        if msg.service or msg.empty:
             await app.delete_messages(sender, edit_id)
             return
 
-        if tclient:
-            if msg.message is None and not msg.media:
-                return
-        else:
-            if msg.service or msg.empty:
-                return
-
-        # 🔥 TOPIC FILTER (FIRST)
-        if thread_id:
-            if tclient:
-                # Telethon message
-                if not msg.reply_to or not getattr(msg.reply_to, "reply_to_msg_id", None):
-                    return
-
-                if msg.reply_to.reply_to_msg_id != thread_id:
-                    return
-            else:
-                # Pyrogram message
-                if not msg.reply_to_message_id:
-                    return
-
-                if msg.reply_to_message_id != thread_id:
-                    return
-
-        # 🔥 TARGET CHAT SETUP (SECOND)
-        target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
-        topic_id = None
-        if '/' in str(target_chat_id):
-            target_chat_id, topic_id = map(int, target_chat_id.split('/', 1))
-
-        # 🔥 TEXT HANDLING (THIRD)
-        text_content = msg.message if tclient else msg.text
-
-        if text_content and not msg.media:
-            await clone_text_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
-            return
-                    
         target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
         topic_id = None
         if '/' in str(target_chat_id):
@@ -294,7 +255,7 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             await clone_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
             return
 
-        if text_content:
+        if msg.text:
             await clone_text_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
             return
 
@@ -498,7 +459,7 @@ async def copy_message_with_chat_id(app, userbot, sender, chat_id, message_id, e
             if not msg or msg.service or msg.empty:
                 return
 
-            if text_content:
+            if msg.text:
                 await app.send_message(target_chat_id, msg.text.markdown, reply_to_message_id=topic_id)
                 return
 
