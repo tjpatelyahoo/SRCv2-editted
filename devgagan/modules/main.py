@@ -421,8 +421,6 @@ async def topic_link(_, message):
 
             # ✅ VALID MESSAGE → PROCESS WITH PYROGRAM
 
-            processed += 1
-
             url = f"{'/'.join(start_link.split('/')[:-1])}/{i}"
 
             temp = await app.send_message(message.chat.id, "Processing...")
@@ -437,6 +435,8 @@ async def topic_link(_, message):
                     message
                 )
 
+                processed += 1   # ✅ ONLY after success
+
             except FloodWait as fw:
                 wait_time = int(fw.value) if hasattr(fw, "value") else int(fw.x)
                 await asyncio.sleep(wait_time)
@@ -450,13 +450,14 @@ async def topic_link(_, message):
                     message
                 )
 
+                processed += 1   # ✅ also after retry success
+
             except Exception as e:
                 await app.send_message(
                     user_id,
                     f"⚠️ Error on message {i}:\n{str(e)}"
                 )
 
-            # ✅ ALWAYS update (NO % 3)
             await msg.edit_text(
                 f"🚀 Topic process started\nProcessing: {processed}/{total}"
             )
