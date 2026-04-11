@@ -24,6 +24,9 @@ from devgagan.core.get_func import get_msg
 from devgagan.core.func import *
 from devgagan.core.mongo import db
 from pyrogram.errors import FloodWait
+from telethon.sessions import StringSession
+from telethon import TelegramClient
+from devgagan.core.mongo.db import get_telethon_session, set_telethon_session
 from datetime import datetime, timedelta
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import subprocess
@@ -314,7 +317,51 @@ async def topic_link(_, message):
         await message.reply("Login required first.")
         return
 
-    # 🔥 SAME AS /batch (START LINK)
+    # =========================
+    # 🔥 TELETHON SESSION CHECK
+    # =========================
+    telethon_string = await get_telethon_session(user_id)
+
+    if not telethon_string:
+        await message.reply("⚙️ First-time setup for Topic mode.\nPlease login once.")
+
+        tclient = TelegramClient(StringSession(), API_ID, API_HASH)
+        await tclient.connect()
+
+        # 📱 PHONE
+        phone = await app.ask(user_id, "📱 Enter your phone number (with country code)")
+        code = await tclient.send_code_request(phone.text)
+
+        # 🔐 OTP
+        otp = await app.ask(user_id, "🔐 Enter OTP (format: 1 2 3 4 5)")
+        phone_code = otp.text.replace(" ", "")
+
+        await tclient.sign_in(phone.text, phone_code, code.phone_code_hash)
+
+        # 🔑 2FA
+        try:
+            pwd = await app.ask(user_id, "🔑 Enter 2FA password (or send /skip)")
+            if pwd.text != "/skip":
+                await tclient.sign_in(password=pwd.text)
+        except:
+            pass
+
+        telethon_string = tclient.session.save()
+        await tclient.disconnect()
+
+        await set_telethon_session(user_id, telethon_string)
+
+        await message.reply("✅ Telethon login successful! Saved for future use.")
+
+    # =========================
+    # 🔥 INIT TELETHON CLIENT
+    # =========================
+    tclient = TelegramClient(StringSession(telethon_string), API_ID, API_HASH)
+    await tclient.connect()
+
+    # =========================
+    # 🔥 START LINK
+    # =========================
     for attempt in range(3):
         start = await app.ask(message.chat.id, "Please send the start link.\n\n> Maximum tries 3")
         start_link = start.text.strip()
@@ -326,7 +373,9 @@ async def topic_link(_, message):
     else:
         return
 
-    # 🔥 END LINK INSTEAD OF COUNT
+    # =========================
+    # 🔥 END LINK
+    # =========================
     for attempt in range(3):
         end = await app.ask(message.chat.id, "Please send the END link.")
         end_link = end.text.strip()
@@ -364,7 +413,8 @@ async def topic_link(_, message):
                 url,
                 0,
                 message,
-                thread_id=thread_id
+                thread_id=thread_id,
+                tclient=tclient
             )
 
             await msg.edit_text(
@@ -378,6 +428,7 @@ async def topic_link(_, message):
 
     finally:
         users_loop.pop(user_id, None)
+        await tclient.disconnect()
         
 @app.on_message(filters.command("cancel"))
 async def stop_batch(_, message):
