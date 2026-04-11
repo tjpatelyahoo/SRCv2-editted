@@ -67,7 +67,15 @@ async def restrict_bot():
     await setup_database()
 
     # start main bot
-    await app.start()
+    from pyrogram.errors import FloodWait
+
+    try:
+        await app.start()
+    except FloodWait as e:
+        print(f"⏳ FloodWait detected: {e.value} seconds. Sleeping...")
+        await asyncio.sleep(e.value)
+        print("🔄 Retrying bot start...")
+        await app.start()
 
     # start telethon
     #await sex.start(bot_token=BOT_TOKEN)
