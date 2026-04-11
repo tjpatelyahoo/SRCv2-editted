@@ -247,16 +247,18 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             await app.delete_messages(sender, edit_id)
             return
 
-        # 🔥 TELETHON vs PYROGRAM SAFE CHECK
         if tclient:
-            # Telethon message
             if msg.message is None and not msg.media:
                 return
         else:
-            # Pyrogram message
             if msg.service or msg.empty:
                 return
-            await app.delete_messages(sender, edit_id)
+
+        # 🔥 TEXT HANDLING
+        text_content = msg.message if tclient else msg.text
+
+        if text_content and not msg.media:
+            await clone_text_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
             return
 
 # 🔥 TOPIC FILTER (FINAL SAFE VERSION)
