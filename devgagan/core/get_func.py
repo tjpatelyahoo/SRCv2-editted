@@ -254,14 +254,7 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             if msg.service or msg.empty:
                 return
 
-        # 🔥 TEXT HANDLING
-        text_content = msg.message if tclient else msg.text
-
-        if text_content and not msg.media:
-            await clone_text_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
-            return
-
-# 🔥 TOPIC FILTER (FINAL SAFE VERSION)
+        # 🔥 TOPIC FILTER (FIRST)
         if thread_id:
             if tclient:
                 # Telethon message
@@ -277,6 +270,19 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
 
                 if msg.reply_to_message_id != thread_id:
                     return
+
+        # 🔥 TARGET CHAT SETUP (SECOND)
+        target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
+        topic_id = None
+        if '/' in str(target_chat_id):
+            target_chat_id, topic_id = map(int, target_chat_id.split('/', 1))
+
+        # 🔥 TEXT HANDLING (THIRD)
+        text_content = msg.message if tclient else msg.text
+
+        if text_content and not msg.media:
+            await clone_text_message(app, msg, target_chat_id, topic_id, edit_id, LOG_GROUP)
+            return
                     
         target_chat_id = user_chat_ids.get(message.chat.id, message.chat.id)
         topic_id = None
