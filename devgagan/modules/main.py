@@ -328,11 +328,9 @@ async def topic_link(_, message):
         tclient = TelegramClient(StringSession(), API_ID, API_HASH)
         await tclient.connect()
 
-        # 📱 PHONE
         phone = await app.ask(user_id, "📱 Enter your phone number (with country code)")
         code = await tclient.send_code_request(phone.text)
 
-        # 🔐 OTP
         otp = await app.ask(user_id, "🔐 Enter OTP (format: 1 2 3 4 5)")
         phone_code = otp.text.replace(" ", "")
 
@@ -390,7 +388,9 @@ async def topic_link(_, message):
     else:
         return
 
+    # 🔥 EXTRACT CHAT + TOPIC
     thread_id = int(start_link.split("/")[-2])
+    chat = int('-100' + start_link.split("/")[4])
     total = end_id - start_id + 1
 
     msg = await app.send_message(
@@ -399,11 +399,29 @@ async def topic_link(_, message):
     )
 
     users_loop[user_id] = True
+    processed = 0
 
     try:
         for i in range(start_id, end_id + 1):
+
             if not users_loop.get(user_id):
                 break
+
+            # 🔥 TELETHON FILTER ONLY
+            tmsg = await tclient.get_messages(chat, ids=i)
+
+            if not tmsg:
+                continue
+
+            if not tmsg.reply_to or not getattr(tmsg.reply_to, "reply_to_msg_id", None):
+                continue
+
+            if tmsg.reply_to.reply_to_msg_id != thread_id:
+                continue
+
+            # ✅ VALID MESSAGE → PROCESS WITH PYROGRAM
+
+            processed += 1
 
             url = f"{'/'.join(start_link.split('/')[:-1])}/{i}"
 
@@ -415,16 +433,16 @@ async def topic_link(_, message):
                 temp.id,
                 url,
                 0,
-                message,
-                thread_id=thread_id,
-                tclient=tclient
+                message
             )
-
             await msg.edit_text(
-                f"🚀 Topic process started\nProcessing: {i - start_id + 1}/{total}"
+                f"🚀 Topic process started\nProcessing: {processed}/{total}"
             )
 
-        await msg.edit_text("✅ Topic completed successfully!")
+        if processed == 0:
+            await msg.edit_text("❌ No messages found in this topic range.")
+        else:
+            await msg.edit_text("✅ Topic completed successfully!")
 
     except Exception as e:
         await app.send_message(message.chat.id, f"Error: {e}")
