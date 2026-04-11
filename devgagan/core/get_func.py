@@ -238,7 +238,6 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message, thread_id=None
             return
             
         # Fetch the target message
-# Fetch the target message
         if tclient:
             msg = await tclient.get_messages(chat, ids=msg_id)
         else:
