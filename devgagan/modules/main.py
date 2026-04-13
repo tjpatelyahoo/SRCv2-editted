@@ -297,6 +297,11 @@ async def batch_link(_, message):
     finally:
         users_loop.pop(user_id, None)
 
+@app.on_message(filters.command("settings") & filters.private)
+async def settings_pyro(_, message):
+    from get_func import send_settings_message
+    await send_settings_message(message.chat.id, message.chat.id)
+    
 @app.on_message(filters.command("topic") & filters.private)
 async def topic_link(_, message):
     join = await subscribe(_, message)
@@ -305,7 +310,7 @@ async def topic_link(_, message):
 
     user_id = message.chat.id
 
-    if users_loop.get(user_id, False):
+    if users_loop.get(user_id) == "topic":
         await app.send_message(
             message.chat.id,
             "You already have a process running. Please wait."
@@ -405,7 +410,7 @@ async def topic_link(_, message):
         f"🚀 Topic process started\nProcessing: 0/{total}"
     )
 
-    users_loop[user_id] = True
+    users_loop[user_id] = "topic"
     processed = 0
 
     try:
