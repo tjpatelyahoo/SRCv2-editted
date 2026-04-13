@@ -299,7 +299,7 @@ async def batch_link(_, message):
 
 @app.on_message(filters.command("settings") & filters.private)
 async def settings_pyro(_, message):
-    from get_func import send_settings_message
+    from devgagan.core.get_func import send_settings_message
     await send_settings_message(message.chat.id, message.chat.id)
     
 @app.on_message(filters.command("topic") & filters.private)
