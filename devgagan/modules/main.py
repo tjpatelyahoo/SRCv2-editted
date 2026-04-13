@@ -19,8 +19,9 @@ import string
 import asyncio
 from pyrogram import filters, Client
 from devgagan import app, userrbot
+from devgagan import sex as gf
 from config import API_ID, API_HASH, FREEMIUM_LIMIT, PREMIUM_LIMIT, OWNER_ID, DEFAULT_SESSION
-from devgagan.core.get_func import get_msg
+from devgagan.core.get_func import get_msg, send_settings_message
 from devgagan.core.func import *
 from devgagan.core.mongo import db
 from pyrogram.errors import FloodWait
@@ -299,7 +300,10 @@ async def batch_link(_, message):
 
 @app.on_message(filters.command("settings") & filters.private)
 async def settings_pyro(_, message):
-    from devgagan.core.get_func import send_settings_message
+
+    if not gf.is_connected():
+        await gf.connect()
+
     await send_settings_message(message.chat.id, message.chat.id)
     
 @app.on_message(filters.command("topic") & filters.private)
