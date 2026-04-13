@@ -32,10 +32,11 @@ from datetime import datetime, timedelta
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import subprocess
 from devgagan.modules.shrink import is_user_verified
+
 async def generate_random_name(length=8):
     return ''.join(random.choices(string.ascii_lowercase, k=length))
 
-
+telethon_started = False
 
 users_loop = {}
 interval_set = {}
@@ -301,8 +302,11 @@ async def batch_link(_, message):
 @app.on_message(filters.command("settings") & filters.private)
 async def settings_pyro(_, message):
 
-    if not gf.is_connected():
-        await gf.connect()
+    global telethon_started
+
+    if not telethon_started or not gf.is_connected():
+        await gf.start()
+        telethon_started = True
 
     await send_settings_message(message.chat.id, message.chat.id)
     
