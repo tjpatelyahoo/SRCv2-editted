@@ -375,7 +375,7 @@ async def settings_buttons(client, query):
         user_chat_ids.pop(user_id, None)
         await query.message.reply("♻️ Settings reset successfully!")
 
-@app.on_message(filters.private & filters.text)
+@app.on_message(filters.private & filters.text & ~filters.command)
 async def settings_input_handler(client, message):
 
     user_id = message.from_user.id
@@ -397,32 +397,23 @@ async def settings_input_handler(client, message):
     elif session_type == "setcaption":
         await set_caption_command(user_id, text)
         await message.reply("✅ Caption saved!")
-        
-    elif session_type == "setreplace":   # ✅ SAME LEVEL (4 spaces)
-    match = re.match(r"'(.+)' '(.+)'", text)
-    if not match:
-        await message.reply("❌ Use format: 'word' 'replaceword'")
-    else:
-        word, replace_word = match.groups()
 
-        delete_words = load_delete_words(user_id)
-        if word in delete_words:
-            await message.reply(f"❌ '{word}' is in delete list")
+    elif session_type == "setreplace":
+        match = re.match(r"'(.+)' '(.+)'", text)
+        if not match:
+            await message.reply("❌ Use format: 'word' 'replaceword'")
         else:
-            replacements = load_replacement_words(user_id)
-            replacements[word] = replace_word
-            save_replacement_words(user_id, replacements)
+            word, replace_word = match.groups()
 
-            await message.reply(f"✅ '{word}' → '{replace_word}' saved")    
-        
-    elif session_type == "setdelete":
-        words = text.split(",")
-        await save_delete_words(user_id, [w.strip() for w in words])
-        await message.reply("✅ Words to delete saved!")
+            delete_words = load_delete_words(user_id)
+            if word in delete_words:
+                await message.reply(f"❌ '{word}' is in delete list")
+            else:
+                replacements = load_replacement_words(user_id)
+                replacements[word] = replace_word
+                save_replacement_words(user_id, replacements)
 
-    elif session_type == "uploadmethod":
-        await save_user_upload_method(user_id, text)
-        await message.reply("✅ Upload method saved!")
+                await message.reply(f"✅ '{word}' → '{replace_word}' saved")
 
     del sessions[user_id]
         
