@@ -599,224 +599,34 @@ async def set_caption_command(user_id, custom_caption):
 get_user_caption_preference = lambda user_id: user_caption_preferences.get(str(user_id), '')
 
 # Initialize the dictionary to store user sessions
-
 sessions = {}
-m = None
-SET_PIC = "settings.jpg"
-MESS = "Customize by your end and Configure your settings ..."
-
-
-
-    user_id = event.sender_id
-    await send_settings_message(event.chat_id, user_id)
-
-
-
-
 pending_photos = {}
 
-
-    user_id = event.sender_id
-    
-    if event.data == b'setchat':
-        await event.respond("Send me the ID of that chat:")
-        sessions[user_id] = 'setchat'
-
-    elif event.data == b'setrename':
-        await event.respond("Send me the rename tag:")
-        sessions[user_id] = 'setrename'
-    
-    elif event.data == b'setcaption':
-        await event.respond("Send me the caption:")
-        sessions[user_id] = 'setcaption'
-
-    elif event.data == b'setreplacement':
-        await event.respond("Send me the replacement words in the format: 'WORD(s)' 'REPLACEWORD'")
-        sessions[user_id] = 'setreplacement'
-
-    elif event.data == b'addsession':
-        await event.respond("Send Pyrogram V2 session")
-        sessions[user_id] = 'addsession' # (If you want to enable session based login just uncomment this and modify response message accordingly)
-
-    elif event.data == b'delete':
-        await event.respond("Send words seperated by space to delete them from caption/filename ...")
-        sessions[user_id] = 'deleteword'
-        
-    elif event.data == b'logout':
-        await odb.remove_session(user_id)
-        user_data = await odb.get_data(user_id)
-        if user_data and user_data.get("session") is None:
-            await event.respond("Logged out and deleted session successfully.")
-        else:
-            await event.respond("You are not logged in.")
-        
-    elif event.data == b'setthumb':
-        pending_photos[user_id] = True
-        await event.respond('Please send the photo you want to set as the thumbnail.')
-    
-    elif event.data == b'pdfwt':
-        await event.respond("This feature is not available yet in public repo...")
-        return
-
-    elif event.data == b'uploadmethod':
-        # Retrieve the user's current upload method (default to Pyrogram)
-        user_data = collection.find_one({'user_id': user_id})
-        current_method = user_data.get('upload_method', 'Pyrogram') if user_data else 'Pyrogram'
-        pyrogram_check = " ✅" if current_method == "Pyrogram" else ""
-        telethon_check = " ✅" if current_method == "Telethon" else ""
-
-        # Display the buttons for selecting the upload method
-        buttons = [
-            [Button.inline(f"Pyrogram v2{pyrogram_check}", b'pyrogram')],
-            [Button.inline(f"SpyLib v1 ⚡{telethon_check}", b'telethon')]
-        ]
-        await event.edit("Choose your preferred upload method:\n\n__**Note:** **SpyLib ⚡**, built on Telethon(base), by Admin still in beta.__", buttons=buttons)
-
-    elif event.data == b'pyrogram':
-        save_user_upload_method(user_id, "Pyrogram")
-        await event.edit("Upload method set to **Pyrogram** ✅")
-
-    elif event.data == b'telethon':
-        save_user_upload_method(user_id, "Telethon")
-        await event.edit("Upload method set to **SpyLib ⚡\n\nThanks for choosing this library as it will help me to analyze the error raise issues on github.** ✅")        
-        
-    elif event.data == b'reset':
-        try:
-            user_id_str = str(user_id)
-            
-            collection.update_one(
-                {"_id": user_id},
-                {"$unset": {
-                    "delete_words": "",
-                    "replacement_words": "",
-                    "watermark_text": "",
-                    "duration_limit": ""
-                }}
-            )
-            
-            collection.update_one(
-                {"user_id": user_id},
-                {"$unset": {
-                    "delete_words": "",
-                    "replacement_words": "",
-                    "watermark_text": "",
-                    "duration_limit": ""
-                }}
-            )            
-            user_chat_ids.pop(user_id, None)
-            user_rename_preferences.pop(user_id_str, None)
-            user_caption_preferences.pop(user_id_str, None)
-            thumbnail_path = f"{user_id}.jpg"
-            if os.path.exists(thumbnail_path):
-                os.remove(thumbnail_path)
-            await event.respond("✅ Reset successfully, to logout click /logout")
-        except Exception as e:
-            await event.respond(f"Error clearing delete list: {e}")
-    
-    elif event.data == b'remthumb':
-        try:
-            os.remove(f'{user_id}.jpg')
-            await event.respond('Thumbnail removed successfully!')
-        except FileNotFoundError:
-            await event.respond("No thumbnail found to remove.")
-    
-
-
-    user_id = event.sender_id  # Use event.sender_id as user_id
-
-    if event.photo:
-        temp_path = await event.download_media()
-        if os.path.exists(f'{user_id}.jpg'):
-            os.remove(f'{user_id}.jpg')
-        os.rename(temp_path, f'./{user_id}.jpg')
-        await event.respond('Thumbnail saved successfully!')
-
-    else:
-        await event.respond('Please send a photo... Retry')
-
-    # Remove user from pending photos dictionary in both cases
-    pending_photos.pop(user_id, None)
-
 def save_user_upload_method(user_id, method):
-    # Save or update the user's preferred upload method
     collection.update_one(
-        {'user_id': user_id},  # Query
-        {'$set': {'upload_method': method}},  # Update
-        upsert=True  # Create a new document if one doesn't exist
+        {'user_id': user_id},
+        {'$set': {'upload_method': method}},
+        upsert=True
     )
-
-
-    user_id = event.sender_id
-    if user_id in sessions:
-        session_type = sessions[user_id]
-
-        if session_type == 'setchat':
-            try:
-                chat_id = event.text
-                user_chat_ids[user_id] = chat_id
-                await event.respond("Chat ID set successfully!")
-            except ValueError:
-                await event.respond("Invalid chat ID!")
-                
-        elif session_type == 'setrename':
-            custom_rename_tag = event.text
-            await set_rename_command(user_id, custom_rename_tag)
-            await event.respond(f"Custom rename tag set to: {custom_rename_tag}")
-        
-        elif session_type == 'setcaption':
-            custom_caption = event.text
-            await set_caption_command(user_id, custom_caption)
-            await event.respond(f"Custom caption set to: {custom_caption}")
-
-        elif session_type == 'setreplacement':
-            match = re.match(r"'(.+)' '(.+)'", event.text)
-            if not match:
-                await event.respond("Usage: 'WORD(s)' 'REPLACEWORD'")
-            else:
-                word, replace_word = match.groups()
-                delete_words = load_delete_words(user_id)
-                if word in delete_words:
-                    await event.respond(f"The word '{word}' is in the delete set and cannot be replaced.")
-                else:
-                    replacements = load_replacement_words(user_id)
-                    replacements[word] = replace_word
-                    save_replacement_words(user_id, replacements)
-                    await event.respond(f"Replacement saved: '{word}' will be replaced with '{replace_word}'")
-
-        elif session_type == 'addsession':
-            session_string = event.text
-            await odb.set_session(user_id, session_string)
-            await event.respond("✅ Session string added successfully!")
-                
-        elif session_type == 'deleteword':
-            words_to_delete = event.message.text.split()
-            delete_words = load_delete_words(user_id)
-            delete_words.update(words_to_delete)
-            save_delete_words(user_id, delete_words)
-            await event.respond(f"Words added to delete list: {', '.join(words_to_delete)}")
-               
-            
-        del sessions[user_id]
     
-# Command to store channel IDs
+@app.on_message(filters.command("lock") & filters.private)
+async def lock_command_handler(client, message):
 
-    if event.sender_id not in OWNER_ID:
-        return await event.respond("You are not authorized to use this command.")
-    
-    # Extract the channel ID from the command
+    user_id = message.from_user.id
+
+    if user_id not in OWNER_ID:
+        return await message.reply("You are not authorized to use this command.")
+
     try:
-        channel_id = int(event.text.split(' ')[1])
+        channel_id = int(message.text.split(' ')[1])
     except (ValueError, IndexError):
-        return await event.respond("Invalid /lock command. Use /lock CHANNEL_ID.")
-    
-    # Save the channel ID to the MongoDB database
-    try:
-        # Insert the channel ID into the collection
-        collection.insert_one({"channel_id": channel_id})
-        await event.respond(f"Channel ID {channel_id} locked successfully.")
-    except Exception as e:
-        await event.respond(f"Error occurred while locking channel ID: {str(e)}")
+        return await message.reply("Invalid /lock command. Use /lock CHANNEL_ID.")
 
+    try:
+        collection.insert_one({"channel_id": channel_id})
+        await message.reply(f"Channel ID {channel_id} locked successfully.")
+    except Exception as e:
+        await message.reply(f"Error occurred: {str(e)}")
 
 async def handle_large_file(file, sender, edit, caption):
     if pro is None:
