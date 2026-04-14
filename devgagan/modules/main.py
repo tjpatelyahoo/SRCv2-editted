@@ -22,6 +22,7 @@ from devgagan import app, userrbot
 from devgagan import sex as gf
 from config import API_ID, API_HASH, FREEMIUM_LIMIT, PREMIUM_LIMIT, OWNER_ID, DEFAULT_SESSION
 from devgagan.core.func import *
+from devgagan.core.get_func import get_msg
 from devgagan.core.mongo import db
 from pyrogram.errors import FloodWait
 from telethon.sessions import StringSession
@@ -31,6 +32,14 @@ from datetime import datetime, timedelta
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import subprocess
 from devgagan.modules.shrink import is_user_verified
+from devgagan.core.get_func import (
+    set_rename_command,
+    set_caption_command,
+    load_delete_words,
+    save_delete_words,
+    load_replacement_words,
+    save_replacement_words
+)
 
 async def generate_random_name(length=8):
     return ''.join(random.choices(string.ascii_lowercase, k=length))
@@ -383,15 +392,25 @@ async def settings_input_handler(client, message):
     elif session_type == "setcaption":
         await set_caption_command(user_id, text)
         await message.reply("✅ Caption saved!")
+    if session_type == "setchat":
+    ...
+    elif session_type == "setreplace":   # ✅ SAME LEVEL (4 spaces)
+    match = re.match(r"'(.+)' '(.+)'", text)
+    if not match:
+        await message.reply("❌ Use format: 'word' 'replaceword'")
+    else:
+        word, replace_word = match.groups()
 
-    elif session_type == "setreplace":
-        try:
-            old, new = text.split(",")
-            await save_replacement(user_id, old.strip(), new.strip())
-            await message.reply("✅ Replacement saved!")
-        except:
-            await message.reply("❌ Format error. Use: old,new")
+        delete_words = load_delete_words(user_id)
+        if word in delete_words:
+            await message.reply(f"❌ '{word}' is in delete list")
+        else:
+            replacements = load_replacement_words(user_id)
+            replacements[word] = replace_word
+            save_replacement_words(user_id, replacements)
 
+            await message.reply(f"✅ '{word}' → '{replace_word}' saved")    
+        
     elif session_type == "setdelete":
         words = text.split(",")
         await save_delete_words(user_id, [w.strip() for w in words])
