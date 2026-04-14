@@ -21,7 +21,6 @@ from pyrogram import filters, Client
 from devgagan import app, userrbot
 from devgagan import sex as gf
 from config import API_ID, API_HASH, FREEMIUM_LIMIT, PREMIUM_LIMIT, OWNER_ID, DEFAULT_SESSION
-from devgagan.core.get_func import get_msg, send_settings_message
 from devgagan.core.func import *
 from devgagan.core.mongo import db
 from pyrogram.errors import FloodWait
@@ -38,6 +37,8 @@ async def generate_random_name(length=8):
 
 telethon_started = False
 
+sessions = {}
+user_chat_ids = {}
 users_loop = {}
 interval_set = {}
 batch_mode = {}
@@ -300,16 +301,108 @@ async def batch_link(_, message):
         users_loop.pop(user_id, None)
 
 @app.on_message(filters.command("settings") & filters.private)
-async def settings_pyro(_, message):
+async def settings_pyro(client, message):
 
-    global telethon_started
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("📥 Set Chat ID", callback_data="setchat"),
+            InlineKeyboardButton("✏️ Rename Tag", callback_data="setrename")
+        ],
+        [
+            InlineKeyboardButton("📝 Set Caption", callback_data="setcaption"),
+            InlineKeyboardButton("🔄 Replace Words", callback_data="setreplace")
+        ],
+        [
+            InlineKeyboardButton("❌ Remove Words", callback_data="setdelete"),
+            InlineKeyboardButton("♻️ Reset", callback_data="reset")
+        ],
+        [
+            InlineKeyboardButton("⚙️ Upload Method", callback_data="uploadmethod")
+        ]
+    ])
 
-    if not telethon_started or not gf.is_connected():
-        await gf.start()
-        telethon_started = True
-
-    await send_settings_message(message.chat.id, message.chat.id)
+    await message.reply_photo(
+        photo="https://graph.org/file/d44f024a08ded19452152.jpg",
+        caption="⚙️ **Settings Panel**\n\nCustomize your bot behavior below:",
+        reply_markup=buttons
+    )
     
+@app.on_callback_query()
+async def settings_buttons(client, query):
+
+    user_id = query.from_user.id
+    data = query.data
+
+    if data == "setchat":
+        sessions[user_id] = "setchat"
+        await query.message.reply("📥 Send Chat ID")
+
+    elif data == "setrename":
+        sessions[user_id] = "setrename"
+        await query.message.reply("✏️ Send Rename Tag")
+
+    elif data == "setcaption":
+        sessions[user_id] = "setcaption"
+        await query.message.reply("📝 Send Caption")
+
+    elif data == "setreplace":
+        sessions[user_id] = "setreplace"
+        await query.message.reply("🔄 Send words to replace\nFormat: old,new")
+
+    elif data == "setdelete":
+        sessions[user_id] = "setdelete"
+        await query.message.reply("❌ Send words to delete (comma separated)")
+
+    elif data == "uploadmethod":
+        sessions[user_id] = "uploadmethod"
+        await query.message.reply("⚙️ Send upload method (document/video/audio)")
+
+    elif data == "reset":
+        user_chat_ids.pop(user_id, None)
+        await query.message.reply("♻️ Settings reset successfully!")
+
+@app.on_message(filters.private & filters.text)
+async def settings_input_handler(client, message):
+
+    user_id = message.from_user.id
+
+    if user_id not in sessions:
+        return
+
+    session_type = sessions[user_id]
+    text = message.text
+
+    if session_type == "setchat":
+        user_chat_ids[user_id] = text
+        await message.reply("✅ Chat ID saved!")
+
+    elif session_type == "setrename":
+        await set_rename_command(user_id, text)
+        await message.reply("✅ Rename tag saved!")
+
+    elif session_type == "setcaption":
+        await set_caption_command(user_id, text)
+        await message.reply("✅ Caption saved!")
+
+    elif session_type == "setreplace":
+        try:
+            old, new = text.split(",")
+            await save_replacement(user_id, old.strip(), new.strip())
+            await message.reply("✅ Replacement saved!")
+        except:
+            await message.reply("❌ Format error. Use: old,new")
+
+    elif session_type == "setdelete":
+        words = text.split(",")
+        await save_delete_words(user_id, [w.strip() for w in words])
+        await message.reply("✅ Words to delete saved!")
+
+    elif session_type == "uploadmethod":
+        await save_user_upload_method(user_id, text)
+        await message.reply("✅ Upload method saved!")
+
+    del sessions[user_id]
+        
 @app.on_message(filters.command("topic") & filters.private)
 async def topic_link(_, message):
     join = await subscribe(_, message)
