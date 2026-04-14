@@ -613,6 +613,26 @@ async def topic_link(_, message):
 
         await tclient.disconnect()
         
+@app.on_message(filters.command("lock") & filters.private)
+async def lock_command_handler(client, message):
+
+    user_id = message.from_user.id
+
+    if user_id not in OWNER_ID:
+        return await message.reply("You are not authorized to use this command.")
+
+    try:
+        channel_id = int(message.text.split(' ')[1])
+    except (ValueError, IndexError):
+        return await message.reply("Invalid /lock command. Use /lock CHANNEL_ID.")
+
+    try:
+        collection.insert_one({"channel_id": channel_id})
+        await message.reply(f"Channel ID {channel_id} locked successfully.")
+    except Exception as e:
+        await message.reply(f"Error occurred: {str(e)}")
+        
+        
 @app.on_message(filters.command("cancel"))
 async def stop_batch(_, message):
     user_id = message.chat.id
