@@ -395,7 +395,8 @@ async def settings_buttons(client, query):
 @app.on_message(
     filters.private
     & filters.text
-    ~filters.command(["start", "batch", "settings", "topic", "lock"], prefixes="/")
+    & ~filters.command(["start", "batch", "settings", "topic", "lock"], prefixes="/")
+)
 async def settings_input_handler(client, message):
 
     user_id = message.from_user.id
