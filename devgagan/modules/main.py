@@ -27,6 +27,7 @@ from devgagan.core.get_func import get_msg
 from devgagan.core.mongo import db
 from pyrogram.errors import FloodWait
 from telethon.sessions import StringSession
+from devgagan.core.get_func import user_chat_ids
 from telethon import TelegramClient
 from devgagan.core.mongo.db import get_telethon_session, set_telethon_session
 from datetime import datetime, timedelta
@@ -48,7 +49,6 @@ async def generate_random_name(length=8):
 telethon_started = False
 
 sessions = {}
-user_chat_ids = {}
 users_loop = {}
 interval_set = {}
 batch_mode = {}
@@ -64,7 +64,7 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
         except Exception:
             pass
 
-        await asyncio.sleep(15)
+        await asyncio.sleep(5)
 
     finally:
         pass
@@ -273,6 +273,9 @@ async def batch_link(_, message):
         userbot = await initialize_userbot(user_id)
         # Handle normal links first
         for i in range(cs, cs + cl):
+
+            await asyncio.sleep(1)  # 🔥 ADD THIS
+
             if user_id in users_loop and users_loop[user_id]:
                 url = f"{'/'.join(start_id.split('/')[:-1])}/{i}"
                 link = get_link(url)
@@ -285,6 +288,7 @@ async def batch_link(_, message):
                         reply_markup=keyboard
                     )
                     normal_links_handled = True
+
         if normal_links_handled:
             await set_interval(user_id, interval_minutes=300)
             await pin_msg.edit_text(
@@ -293,13 +297,17 @@ async def batch_link(_, message):
             )
             await app.send_message(message.chat.id, "Batch completed successfully! 🎉")
             return
-            
+
         # Handle special links with userbot
         for i in range(cs, cs + cl):
+
+            await asyncio.sleep(1)  # 🔥 ADD THIS
+
             if not userbot:
                 await app.send_message(message.chat.id, "Login in bot first ...")
                 users_loop[user_id] = False
                 return
+
             if user_id in users_loop and users_loop[user_id]:
                 url = f"{'/'.join(start_id.split('/')[:-1])}/{i}"
                 link = get_link(url)
@@ -370,7 +378,7 @@ async def settings_buttons(client, query):
 
     elif data == "setreplace":
         sessions[user_id] = "setreplace"
-        await query.message.reply("🔄 Send words to replace\nFormat: old,new")
+        await query.message.reply("🔄 Send words to replace\nFormat: 'old' 'new' ")
 
     elif data == "setdelete":
         sessions[user_id] = "setdelete"
@@ -384,7 +392,10 @@ async def settings_buttons(client, query):
         user_chat_ids.pop(user_id, None)
         await query.message.reply("♻️ Settings reset successfully!")
 
-@app.on_message(filters.private & filters.text & ~filters.command)
+@app.on_message(
+    filters.private
+    & filters.text
+    ~filters.command(["start", "batch", "settings", "topic", "lock"], prefixes="/")
 async def settings_input_handler(client, message):
 
     user_id = message.from_user.id
@@ -594,7 +605,7 @@ async def topic_link(_, message):
                 f"🚀 Topic process started\nProcessing: {processed}/{total}"
             )
 
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(1)
 
 
     except Exception as e:
