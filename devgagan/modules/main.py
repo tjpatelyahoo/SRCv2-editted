@@ -54,12 +54,17 @@ batch_mode = {}
 
 async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, message):
     try:
+        from devgagan.core.get_func import get_msg   # ✅ FIX HERE
+
         await get_msg(userbot, user_id, msg_id, link, retry_count, message)
+
         try:
             await app.delete_messages(user_id, msg_id)
         except Exception:
             pass
+
         await asyncio.sleep(15)
+
     finally:
         pass
 
@@ -392,8 +397,7 @@ async def settings_input_handler(client, message):
     elif session_type == "setcaption":
         await set_caption_command(user_id, text)
         await message.reply("✅ Caption saved!")
-    if session_type == "setchat":
-    ...
+        
     elif session_type == "setreplace":   # ✅ SAME LEVEL (4 spaces)
     match = re.match(r"'(.+)' '(.+)'", text)
     if not match:
