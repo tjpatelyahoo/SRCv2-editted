@@ -605,37 +605,17 @@ m = None
 SET_PIC = "settings.jpg"
 MESS = "Customize by your end and Configure your settings ..."
 
-@gf.on(events.NewMessage(incoming=True, pattern='/settings'))
-async def settings_command(event):
+
+
     user_id = event.sender_id
     await send_settings_message(event.chat_id, user_id)
 
-async def send_settings_message(chat_id, user_id):
-    
-    # Define the rest of the buttons
-    buttons = [
-        [Button.inline("Set Chat ID", b'setchat'), Button.inline("Set Rename Tag", b'setrename')],
-        [Button.inline("Caption", b'setcaption'), Button.inline("Replace Words", b'setreplacement')],
-        [Button.inline("Remove Words", b'delete'), Button.inline("Reset", b'reset')],
-        [Button.inline("Session Login", b'addsession'), Button.inline("Logout", b'logout')],
-        [Button.inline("Set Thumbnail", b'setthumb'), Button.inline("Remove Thumbnail", b'remthumb')],
-        [Button.inline("PDF Wtmrk", b'pdfwt'), Button.inline("Video Wtmrk", b'watermark')],
-        [Button.inline("Upload Method", b'uploadmethod')],  # Include the dynamic Fast DL button
-        [Button.url("Report Errors", "https://t.me/team_spy_pro")]
-    ]
 
-    await gf.send_file(
-        chat_id,
-        file=SET_PIC,
-        caption=MESS,
-        buttons=buttons
-    )
 
 
 pending_photos = {}
 
-@gf.on(events.CallbackQuery)
-async def callback_query_handler(event):
+
     user_id = event.sender_id
     
     if event.data == b'setchat':
@@ -741,8 +721,7 @@ async def callback_query_handler(event):
             await event.respond("No thumbnail found to remove.")
     
 
-@gf.on(events.NewMessage(func=lambda e: e.sender_id in pending_photos))
-async def save_thumbnail(event):
+
     user_id = event.sender_id  # Use event.sender_id as user_id
 
     if event.photo:
@@ -766,8 +745,7 @@ def save_user_upload_method(user_id, method):
         upsert=True  # Create a new document if one doesn't exist
     )
 
-@gf.on(events.NewMessage)
-async def handle_user_input(event):
+
     user_id = event.sender_id
     if user_id in sessions:
         session_type = sessions[user_id]
@@ -821,8 +799,7 @@ async def handle_user_input(event):
         del sessions[user_id]
     
 # Command to store channel IDs
-@gf.on(events.NewMessage(incoming=True, pattern='/lock'))
-async def lock_command_handler(event):
+
     if event.sender_id not in OWNER_ID:
         return await event.respond("You are not authorized to use this command.")
     
