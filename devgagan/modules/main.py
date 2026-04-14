@@ -17,6 +17,7 @@ import time
 import random
 import string
 import asyncio
+import re
 from pyrogram import filters, Client
 from devgagan import app, userrbot
 from devgagan import sex as gf
@@ -91,7 +92,15 @@ async def set_interval(user_id, interval_minutes=45):
     # Set the cooldown interval for the user
     interval_set[user_id] = now + timedelta(seconds=interval_minutes)
     
-
+@app.on_message(filters.command("start") & filters.private)
+async def start_cmd(client, message):
+    await message.reply(
+        "Hi 👋 Welcome, Wanna intro...?\n\n"
+        "✳️ I can save posts from channels or groups where forwarding is off.\n"
+        "✳️ Send a public post link or use /login for private.\n"
+        "✳️ Use /help to know more."
+    )
+    
 @app.on_message(
     filters.regex(r'https?://(?:www\.)?t\.me/[^\s]+|tg://openmessage\?user_id=\w+&message_id=\d+')
     & filters.private
