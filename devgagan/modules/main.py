@@ -404,15 +404,17 @@ async def settings_buttons(client, query):
         user_chat_ids.pop(user_id, None)
         await query.message.reply("♻️ Settings reset successfully!")
 
-@app.on_message(filters.private & filters.text)
+@app.on_message(
+    filters.private
+    & filters.text
+    & ~filters.command(None)
+)
 async def settings_input_handler(client, message):
 
     user_id = message.from_user.id
 
     if user_id not in sessions:
         return
-
-    # rest of your logic...
 
     session_type = sessions[user_id]
     text = message.text
