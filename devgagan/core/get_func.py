@@ -884,7 +884,8 @@ async def split_and_upload_file(app, sender, target_chat_id, file_path, caption,
 
     file_size = os.path.getsize(file_path)
     start = await app.send_message(sender, f"ℹ️ File size: {file_size / (1024 * 1024):.2f} MB")
-    PART_SIZE =  1.9 * 1024 * 1024 * 1024
+
+    PART_SIZE = 1.9 * 1024 * 1024 * 1024  # keep as you want
 
     part_number = 0
     async with aiofiles.open(file_path, mode="rb") as f:
@@ -893,23 +894,34 @@ async def split_and_upload_file(app, sender, target_chat_id, file_path, caption,
             if not chunk:
                 break
 
-            # Create part filename
             base_name, file_ext = os.path.splitext(file_path)
             part_file = f"{base_name}.part{str(part_number).zfill(3)}{file_ext}"
 
-            # Write part to file
             async with aiofiles.open(part_file, mode="wb") as part_f:
                 await part_f.write(chunk)
 
-            # Uploading part
+            del chunk  # 🔥 free memory
+
+            # Upload
             edit = await app.send_message(target_chat_id, f"⬆️ Uploading part {part_number + 1}...")
             part_caption = f"{caption} \n\n**Part : {part_number + 1}**"
-            await app.send_document(target_chat_id, document=part_file, caption=part_caption, reply_to_message_id=topic_id,
-                progress=progress_bar,
-                progress_args=("╭─────────────────────╮\n│      **__Pyro Uploader__**\n├─────────────────────", edit, time.time())
+
+            await app.send_document(
+                target_chat_id,
+                document=part_file,
+                caption=part_caption,
+                reply_to_message_id=topic_id
             )
+
             await edit.delete()
-            os.remove(part_file)  # Cleanup after upload
+            os.remove(part_file)
+
+            # 🔥 IMPORTANT CLEANUP
+            del part_file
+            import gc
+            gc.collect()
+
+            await asyncio.sleep(1)  # 🔥 stabilize memory
 
             part_number += 1
 
