@@ -108,10 +108,17 @@ async def start_cmd(client, message):
 async def single_link(_, message):
 
     user_id = message.from_user.id
+    text = message.text
 
-    # 🔥 THIS FIX
+    # 🔥 FIX 1: ignore settings session
     if user_id in sessions:
         return
+
+    # 🔥 FIX 2: ignore quoted replacement input
+    if "'" in text:
+        return
+
+    # rest of your code...
 
     # Check subscription and batch mode
     if await subscribe(_, message) == 1 or user_id in batch_mode:
