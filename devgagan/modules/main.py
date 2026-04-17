@@ -106,7 +106,12 @@ async def start_cmd(client, message):
     & filters.private
 )
 async def single_link(_, message):
-    user_id = message.chat.id
+
+    user_id = message.from_user.id
+
+    # 🔥 THIS FIX
+    if user_id in sessions:
+        return
 
     # Check subscription and batch mode
     if await subscribe(_, message) == 1 or user_id in batch_mode:
