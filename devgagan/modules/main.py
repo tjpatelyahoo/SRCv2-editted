@@ -407,7 +407,7 @@ async def settings_buttons(client, query):
 @app.on_message(
     filters.private
     & filters.text
-    & ~filters.command(None)
+    & ~filters.command([])
 )
 async def settings_input_handler(client, message):
 
@@ -415,6 +415,7 @@ async def settings_input_handler(client, message):
 
     if user_id not in sessions:
         return
+
 
     session_type = sessions[user_id]
     text = message.text
