@@ -432,7 +432,7 @@ async def settings_input_handler(client, message):
         await message.reply("✅ Caption saved!")
 
     elif session_type == "setreplace":
-        match = re.match(r"'(.+)' '(.+)'", text)
+        match = re.match(r"'([^']+)' '([^']+)'", text)
         if not match:
             await message.reply("❌ Use format: 'word' 'replaceword'")
         else:
